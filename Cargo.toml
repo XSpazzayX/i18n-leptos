@@ -1,0 +1,20 @@
+[package]
+name = "i18n_leptos"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+leptos = { version = "0.7" }
+i18n = { git = "ssh://git@github.com/Instant-Reactive-Systems/i18n.git" }
+web-sys = { version = "0.3", features = [
+  "Window",
+  "Navigator",
+  "Storage",
+  "UrlSearchParams",
+  "HtmlDocument",
+] }
+
+[features]
+default = []
+ssr = []
+
