@@ -12,7 +12,7 @@ compile_error!("not implemented");
 #[macro_export]
 macro_rules! tr {
     (e:expr) => {
-        Signal::derive(move || $e)
+        Signal::derive(move || $e.reactive_localize())
     };
 }
 
@@ -21,7 +21,7 @@ pub trait ReactiveLocalizedDisplay {
     /// Reactively localizes the type.
     ///
     /// # Safety
-    /// Must not be called outside of a reactive context since it calls `use_context()`.`
+    /// Must not be called outside of a reactive context since it calls `use_context()`.
     fn reactive_localize(&self) -> String;
 }
 
