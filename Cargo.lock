@@ -510,7 +510,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "i18n_leptos"
+name = "i18n-leptos"
 version = "0.1.0"
 dependencies = [
  "i18n",
