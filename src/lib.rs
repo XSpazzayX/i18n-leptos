@@ -1,3 +1,5 @@
+//! A set of utilities for reactive localization in Leptos.
+
 mod utils;
 
 use std::str::FromStr;
