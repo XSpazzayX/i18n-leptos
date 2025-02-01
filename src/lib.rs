@@ -11,7 +11,7 @@ compile_error!("not implemented");
 /// Wraps the localizing type in a signal.
 #[macro_export]
 macro_rules! tr {
-    (e:expr) => {
+    ($e:expr) => {
         Signal::derive(move || $e.reactive_localize())
     };
 }
