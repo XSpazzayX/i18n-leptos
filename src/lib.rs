@@ -27,7 +27,7 @@ pub trait ReactiveLocalizedDisplay {
     fn reactive_localize(&self) -> String;
 }
 
-impl<T: i18n::LocalizedDisplay> ReactiveLocalizedDisplay for T {
+impl<T: i18n::LocalizedDisplay> ReactiveLocalizedDisplay for &T {
     fn reactive_localize(&self) -> String {
         let langid = expect_langid();
         self.localize(&langid.get())
