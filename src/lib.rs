@@ -38,7 +38,7 @@ impl<T: i18n::LocalizedDisplay> ReactiveLocalizedDisplay for T {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LangIdSource {
     Navigator,
-    LocalStorage,
+    LocalStorage(String),
     Cookie(String),
 }
 
@@ -56,7 +56,6 @@ pub fn expect_langid() -> ReadSignal<i18n::LanguageIdentifier> {
     use_langid().unwrap()
 }
 
-const KEY_NAME: &'static str = "i18n-lang";
 const LANGID_EVENT_CHANGE_NAME: &'static str = "i18n-lang-change-notification";
 
 /// Changes the langid given browser preference or explicit selection.
@@ -85,9 +84,9 @@ pub fn provide_langid_context(source: LangIdSource) {
 
     match source {
         LangIdSource::Navigator => {}
-        LangIdSource::LocalStorage => {
+        LangIdSource::LocalStorage(key) => {
             // set initial local storage langid
-            if let Some(storage_langid) = utils::local_storage::get(KEY_NAME) {
+            if let Some(storage_langid) = utils::local_storage::get(&key) {
                 let new_langid = i18n::LanguageIdentifier::from_str(&storage_langid)
                     .unwrap_or(initial_langid.clone());
                 langid.set(new_langid);
@@ -98,9 +97,10 @@ pub fn provide_langid_context(source: LangIdSource) {
                 leptos::ev::Custom::<leptos::ev::CustomEvent>::new(LANGID_EVENT_CHANGE_NAME);
             _ = leptos_use::use_event_listener(leptos_use::use_window(), custom_event, {
                 let initial_langid = initial_langid.clone();
+                let key = key.clone();
                 move |data| {
                     let new_langid = data.detail().as_string().unwrap();
-                    utils::local_storage::set(KEY_NAME, &new_langid);
+                    utils::local_storage::set(&key, &new_langid);
                     langid.set(
                         i18n::LanguageIdentifier::from_str(&new_langid)
                             .unwrap_or(initial_langid.clone()),
@@ -109,25 +109,22 @@ pub fn provide_langid_context(source: LangIdSource) {
             });
 
             // handle external modification of localStorage
-            _ = leptos_use::use_event_listener(leptos_use::use_window(), leptos::ev::storage, {
-                let initial_langid = initial_langid.clone();
-                move |ev| match ev.key() {
-                    Some(key) => {
-                        if key == KEY_NAME {
-                            match ev.new_value() {
-                                Some(new_langid) => {
-                                    let new_langid =
-                                        i18n::LanguageIdentifier::from_str(&new_langid)
-                                            .unwrap_or(initial_langid.clone());
-                                    langid.set(new_langid);
-                                }
-                                None => langid.set(initial_langid.clone()),
+            leptos_use::use_interval_fn(
+                move || {
+                    let storage_langid = utils::local_storage::get(&key);
+                    let now = langid.get_untracked();
+                    if let Some(storage_langid) = storage_langid {
+                        if storage_langid != now.to_string() {
+                            if let Ok(new_langid) =
+                                i18n::LanguageIdentifier::from_str(&storage_langid)
+                            {
+                                langid.set(new_langid);
                             }
                         }
                     }
-                    None => langid.set(initial_langid.clone()),
-                }
-            });
+                },
+                1000,
+            );
         }
         LangIdSource::Cookie(key) => {
             #[cfg(not(feature = "ssr"))]
