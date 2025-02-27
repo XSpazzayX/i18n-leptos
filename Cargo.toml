@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 leptos = { version = "0.7" }
+leptos-use = { version = "0.15" }
 i18n = { git = "ssh://git@github.com/Instant-Reactive-Systems/i18n.git" }
 web-sys = { version = "0.3", features = [
   "Window",
@@ -12,6 +13,8 @@ web-sys = { version = "0.3", features = [
   "Storage",
   "UrlSearchParams",
   "HtmlDocument",
+  "CustomEvent",
+  "CustomEventInit",
 ] }
 
 [features]
