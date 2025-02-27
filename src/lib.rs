@@ -86,6 +86,13 @@ pub fn provide_langid_context(source: LangIdSource) {
     match source {
         LangIdSource::Navigator => {}
         LangIdSource::LocalStorage => {
+            // set initial local storage langid
+            if let Some(storage_langid) = utils::local_storage::get(KEY_NAME) {
+                let new_langid = i18n::LanguageIdentifier::from_str(&storage_langid)
+                    .unwrap_or(initial_langid.clone());
+                langid.set(new_langid);
+            }
+
             // handle programmatic change of theme
             let custom_event =
                 leptos::ev::Custom::<leptos::ev::CustomEvent>::new(LANGID_EVENT_CHANGE_NAME);
