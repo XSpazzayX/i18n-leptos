@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-leptos = { version = "0.7" }
-leptos-use = { version = "0.15" }
+leptos = { version = "0.8.0-beta" }
+leptos-use = { version = "0.16.0-beta" }
 i18n = { git = "ssh://git@github.com/Instant-Reactive-Systems/i18n.git" }
 web-sys = { version = "0.3", features = [
   "Window",
