@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 leptos = { version = "0.8.0-beta" }
-leptos-use = { version = "0.16.0-beta" }
+leptos-use = { version = "0.16.0-beta", default-features = false }
 i18n = { git = "ssh://git@github.com/Instant-Reactive-Systems/i18n.git" }
 web-sys = { version = "0.3", features = [
   "Window",
@@ -18,6 +18,9 @@ web-sys = { version = "0.3", features = [
 ] }
 
 [features]
-default = []
+default = [
+  "leptos-use/use_event_listener",
+  "leptos-use/use_interval_fn",
+]
 ssr = []
 
