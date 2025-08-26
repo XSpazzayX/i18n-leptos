@@ -43,16 +43,16 @@ pub enum LangIdSource {
 }
 
 /// Newtype wrapper around a langid signal used to pass it around via contexts.
-#[derive(Debug, Clone, Copy)]
-struct LangIdContext(RwSignal<i18n::LanguageIdentifier>);
+#[derive(Debug, Clone)]
+struct LangIdContext(ArcRwSignal<i18n::LanguageIdentifier>);
 
 /// A utility function for getting the langid signal.
-pub fn use_langid() -> Option<ReadSignal<i18n::LanguageIdentifier>> {
+pub fn use_langid() -> Option<ArcReadSignal<i18n::LanguageIdentifier>> {
     use_context::<LangIdContext>().map(|ctx| ctx.0.read_only())
 }
 
 /// A utility function for getting the langid signal.
-pub fn expect_langid() -> ReadSignal<i18n::LanguageIdentifier> {
+pub fn expect_langid() -> ArcReadSignal<i18n::LanguageIdentifier> {
     use_langid().unwrap()
 }
 
@@ -78,9 +78,9 @@ pub fn provide_langid_context(source: LangIdSource) {
         let langid = i18n::LanguageIdentifier::from_str(&langid).unwrap_throw();
         langid
     };
-    let langid = RwSignal::new(initial_langid.clone());
+    let langid = ArcRwSignal::new(initial_langid.clone());
 
-    provide_context(LangIdContext(langid));
+    provide_context(LangIdContext(langid.clone()));
 
     match source {
         LangIdSource::Navigator => {}
@@ -96,6 +96,7 @@ pub fn provide_langid_context(source: LangIdSource) {
             let custom_event =
                 leptos::ev::Custom::<leptos::ev::CustomEvent>::new(LANGID_EVENT_CHANGE_NAME);
             _ = leptos_use::use_event_listener(leptos_use::use_window(), custom_event, {
+                let langid = langid.clone();
                 let initial_langid = initial_langid.clone();
                 let key = key.clone();
                 move |data| {
@@ -111,6 +112,7 @@ pub fn provide_langid_context(source: LangIdSource) {
             // handle external modification of localStorage
             leptos_use::use_interval_fn(
                 move || {
+                    let langid = langid.clone();
                     let storage_langid = utils::local_storage::get(&key);
                     let now = langid.get_untracked();
                     if let Some(storage_langid) = storage_langid {
@@ -130,6 +132,7 @@ pub fn provide_langid_context(source: LangIdSource) {
             #[cfg(not(feature = "ssr"))]
             {
                 Effect::new({
+                    let langid = langid.clone();
                     let key = key.clone();
                     move |_| {
                         let langid = langid.read().to_string();
