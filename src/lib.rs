@@ -40,6 +40,7 @@ compile_error!("not implemented");
 
 /// A reactive wrapper around `i18n::Message` that automatically re-evaluates
 /// when the language context changes.
+#[derive(Clone, Copy)]
 pub struct ReactiveMessage {
     msg: Signal<i18n::Message>,
 }
