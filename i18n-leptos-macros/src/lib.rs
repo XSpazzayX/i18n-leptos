@@ -41,7 +41,6 @@ struct RtrMacroInput {
     locales_var: Ident,
     main_args: Vec<(Ident, Expr)>,
     attr_args: HashMap<String, Vec<(Ident, Expr)>>,
-    on_error: Option<Expr>,
 }
 
 impl Parse for RtrMacroInput {
@@ -71,7 +70,6 @@ impl Parse for RtrMacroInput {
         let mut locales_var = Ident::new("LOCALES", Span::call_site());
         let mut main_args = Vec::new();
         let mut attr_args: HashMap<String, Vec<(Ident, Expr)>> = HashMap::new();
-        let mut on_error = None;
 
         while input.peek(Token![,]) {
             input.parse::<Token![,]>()?;
@@ -85,8 +83,6 @@ impl Parse for RtrMacroInput {
 
                 if key_ident == "locales" {
                     locales_var = input.parse()?;
-                } else if key_ident == "on_error" {
-                    on_error = Some(input.parse()?);
                 } else {
                     main_args.push((key_ident, input.parse()?));
                 }
@@ -106,7 +102,9 @@ impl Parse for RtrMacroInput {
                     .or_default()
                     .push((arg_key, arg_value));
             } else {
-                return Err(input.error("Unexpected token. Expected `locales = VAR_NAME`, `on_error = EXPR`, or message arguments."));
+                return Err(input.error(
+                    "Unexpected token. Expected `locales = VAR_NAME`, or message arguments.",
+                ));
             }
         }
 
@@ -115,7 +113,6 @@ impl Parse for RtrMacroInput {
             locales_var,
             main_args,
             attr_args,
-            on_error,
         })
     }
 }
@@ -129,11 +126,10 @@ impl Parse for RtrMacroInput {
 /// It supports two primary modes of operation:
 ///
 /// 1.  **Message ID Lookup**: Translates a message ID (string literal) using the
-///     current language from the Leptos context. This mode supports arguments
-///     and custom error handling.
+///     current language from the Leptos context. This mode supports arguments.
 /// 2.  **LocalizedDisplay Object**: Calls the `.reactive_localize()` method on an
 ///     object that implements the `LocalizedDisplay` trait. This mode does not
-///     support additional arguments or error handling within the macro itself,
+///     support additional arguments within the macro itself,
 ///     as the `LocalizedDisplay` implementation is expected to handle its own
 ///     localization logic.
 ///
@@ -147,9 +143,9 @@ impl Parse for RtrMacroInput {
 ///
 /// ## Syntax
 ///
-/// ```rust
+/// ```ignore
 /// // Mode 1: Message ID Lookup
-/// rtr!("message-id" [, locales = VAR_NAME] [, key = value]* [, attr("attr-id", key = value)* ] [, on_error = EXPR]);
+/// rtr!("message-id" [, locales = VAR_NAME] [, key = value]* [, attr("attr-id", key = value)* ]);
 ///
 /// // Mode 2: LocalizedDisplay Object
 /// rtr!(localized_object_expr);
@@ -172,12 +168,6 @@ impl Parse for RtrMacroInput {
 ///     specific attribute of the message. `"attr-id"` is a string literal representing
 ///     the attribute ID. `key` must be an identifier, and `value` can be any Rust expression.
 ///
-/// -   **`on_error = EXPR`** (optional, Mode 1 only): A Rust expression (e.g., a closure
-///     or function call) that will be executed if the localization query fails.
-///     It must accept one argument of type `Vec<i18n::FluentError>` and return
-///     an `i18n::Message`. If not provided, a default `i18n::Message`
-///     is returned (with the message ID as its value).
-///
 /// ## Returns
 ///
 /// A `i18n_leptos::ReactiveMessage`.
@@ -186,7 +176,6 @@ pub fn rtr(input: TokenStream) -> TokenStream {
     let RtrMacroInput {
         kind,
         locales_var,
-        on_error,
         main_args,
         attr_args,
     } = match syn::parse(input) {
@@ -212,23 +201,14 @@ pub fn rtr(input: TokenStream) -> TokenStream {
                 #locales_var.query(&langid.get(), &#query_builder)
             };
 
-            let error_handling_block = if let Some(on_error_expr) = on_error {
-                quote! {
-                    match { #query_call_block } {
-                        Ok(msg) => msg,
-                        Err(errs) => (#on_error_expr)(errs),
-                    }
-                }
-            } else {
-                quote! {
-                    match { #query_call_block } {
-                        Ok(msg) => msg,
-                        Err(errs) => {
-                            i18n::Message {
-                                id: #id.to_string(),
-                                value: #id.to_string(),
-                                attrs: std::collections::HashMap::new(),
-                            }
+            let error_handling_block = quote! {
+                match { #query_call_block } {
+                    Ok(msg) => msg,
+                    Err(errs) => {
+                        i18n::Message {
+                            id: #id.to_string(),
+                            value: #id.to_string(),
+                            attrs: std::collections::HashMap::new(),
                         }
                     }
                 }
@@ -242,10 +222,10 @@ pub fn rtr(input: TokenStream) -> TokenStream {
             TokenStream::from(final_expansion)
         }
         RtrInputKind::LocalizedDisplayExpr(expr) => {
-            if on_error.is_some() || !main_args.is_empty() || !attr_args.is_empty() {
+            if !main_args.is_empty() || !attr_args.is_empty() {
                 return syn::Error::new_spanned(
                     expr,
-                    "Arguments (on_error, key=value, attr(...)) are not supported when passing a LocalizedDisplay object.",
+                    "Arguments (key=value, attr(...)) are not supported when passing a LocalizedDisplay object.",
                 )
                 .to_compile_error()
                 .into();
