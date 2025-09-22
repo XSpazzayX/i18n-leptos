@@ -26,7 +26,7 @@
 //! See the documentation for the `rtr!` macro for detailed usage examples.
 
 pub use i18n;
-pub use i18n_leptos_macros;
+pub use i18n_leptos_macros::*;
 
 mod utils;
 
