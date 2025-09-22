@@ -1,4 +1,32 @@
-//! A set of utilities for reactive localization in Leptos.
+//! `i18n-leptos` is a set of utilities for reactive localization in Leptos,
+//! leveraging the `i18n` crate.
+//!
+//! This crate offers the `rtr!` macro, which simplifies the process of retrieving
+//! localized messages from Fluent (FTL) files within a reactive Leptos context.
+//! It integrates with Leptos's context system to automatically retrieve the current
+//! language identifier and provides a reactive `Message` output.
+//!
+//! ## Features
+//!
+//! - **Reactive Translation**: Automatically re-evaluates translations when the
+//!   language context changes.
+//! - **Context-based Language**: Retrieves the `LanguageIdentifier` from a Leptos
+//!   context, removing the need to explicitly pass it to the macro.
+//! - **Fluent Integration**: Built on `i18n` for robust Fluent (FTL) message
+//!   management, including arguments and attributes.
+//! - **LocalizedDisplay Support**: Seamlessly integrates with types implementing
+//!   `LocalizedDisplay` for reactive localization of complex objects.
+//!
+//! ## Usage
+//!
+//! To use this macro, you need to have `i18n` and `leptos` as dependencies
+//! in your consuming crate, and ensure a `i18n_leptos::LangIdContext`
+//! is provided in the Leptos context (e.g., via `i18n_leptos::provide_langid_context`).
+//!
+//! See the documentation for the `rtr!` macro for detailed usage examples.
+
+pub use i18n;
+pub use i18n_leptos_macros;
 
 mod utils;
 
@@ -10,35 +38,98 @@ use web_sys::wasm_bindgen::UnwrapThrowExt;
 #[cfg(feature = "ssr")]
 compile_error!("not implemented");
 
-/// Wraps the localizing type in a signal.
-#[macro_export]
-macro_rules! tr {
-    ($e:expr) => {
-        Signal::derive(move || $e.reactive_localize())
-    };
+/// A reactive wrapper around `i18n::Message` that automatically re-evaluates
+/// when the language context changes.
+pub struct ReactiveMessage {
+    msg: Signal<i18n::Message>,
 }
 
-/// Reactively localizes the type given the currently set langid.
-pub trait ReactiveLocalizedDisplay {
-    /// Reactively localizes the type.
+impl ReactiveMessage {
+    /// Creates a new `ReactiveMessage` from a signal function that produces an `i18n::Message`.
+    pub fn new<F>(signal_fn: F) -> Self
+    where
+        F: Fn() -> i18n::Message + Send + Sync + 'static,
+    {
+        Self {
+            msg: Signal::derive(signal_fn),
+        }
+    }
+
+    /// Returns the ID of the localized message.
     ///
-    /// # Safety
-    /// Must not be called outside of a reactive context since it calls `use_context()`.
-    fn reactive_localize(&self) -> String;
-}
+    /// This is a reactive read.
+    pub fn id(&self) -> String {
+        self.msg.read().id.clone()
+    }
 
-impl<T: i18n::LocalizedDisplay> ReactiveLocalizedDisplay for T {
-    fn reactive_localize(&self) -> String {
-        let langid = expect_langid();
-        self.localize(&langid.get())
+    /// Returns the ID of the localized message without tracking.
+    pub fn id_untracked(&self) -> String {
+        self.msg.read_untracked().id.clone()
+    }
+
+    /// Returns the translated value of the message.
+    ///
+    /// This is a reactive read.
+    pub fn value(&self) -> String {
+        self.msg.read().value.clone()
+    }
+
+    /// Returns the translated value of the message without tracking.
+    pub fn value_untracked(&self) -> String {
+        self.msg.read_untracked().value.clone()
+    }
+
+    /// Returns the value of a specific attribute of the message.
+    /// If the attribute is not found, it returns the attribute name itself.
+    ///
+    /// This is a reactive read.
+    pub fn attr(&self, attr: &str) -> String {
+        self.msg
+            .read()
+            .attrs
+            .get(attr)
+            .cloned()
+            .unwrap_or_else(move || attr.to_string())
+    }
+
+    /// Returns the value of a specific attribute of the message without tracking.
+    /// If the attribute is not found, it returns the attribute name itself.
+    pub fn attr_untracked(&self, attr: &str) -> String {
+        self.msg
+            .read_untracked()
+            .attrs
+            .get(attr)
+            .cloned()
+            .unwrap_or_else(move || attr.to_string())
     }
 }
 
-/// The source of the langid.
+/// A trait for types that can be reactively localized.
+pub trait ReactiveLocalizedDisplay {
+    /// Localizes the implementor reactively, returning a `ReactiveMessage`.
+    fn reactive_localize(self) -> ReactiveMessage;
+}
+
+impl<T> ReactiveLocalizedDisplay for T
+where
+    T: i18n::LocalizedDisplay + Send + Sync + 'static,
+{
+    fn reactive_localize(self) -> ReactiveMessage {
+        ReactiveMessage::new(move || {
+            let langid = expect_langid();
+            self.localize(&langid.get())
+        })
+    }
+}
+
+/// Defines the source from which the `LanguageIdentifier` is obtained.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LangIdSource {
+    /// The language identifier is obtained from the browser's navigator language.
     Navigator,
+    /// The language identifier is stored in and retrieved from local storage.
     LocalStorage(String),
+    /// The language identifier is stored in and retrieved from a cookie.
     Cookie(String),
 }
 
@@ -46,19 +137,21 @@ pub enum LangIdSource {
 #[derive(Debug, Clone)]
 struct LangIdContext(ArcRwSignal<i18n::LanguageIdentifier>);
 
-/// A utility function for getting the langid signal.
+/// A utility function for getting the langid signal from the Leptos context.
+/// Returns `None` if no `LangIdContext` is provided.
 pub fn use_langid() -> Option<ArcReadSignal<i18n::LanguageIdentifier>> {
     use_context::<LangIdContext>().map(|ctx| ctx.0.read_only())
 }
 
-/// A utility function for getting the langid signal.
+/// A utility function for getting the langid signal from the Leptos context.
+/// Panics if no `LangIdContext` is provided.
 pub fn expect_langid() -> ArcReadSignal<i18n::LanguageIdentifier> {
     use_langid().unwrap()
 }
 
 const LANGID_EVENT_CHANGE_NAME: &'static str = "i18n-lang-change-notification";
 
-/// Changes the langid given browser preference or explicit selection.
+/// Changes the current language identifier and dispatches a custom event to notify listeners.
 pub fn change_langid(langid: i18n::LanguageIdentifier) {
     let langid = langid.to_string();
     let custom_event_init = web_sys::CustomEventInit::new();
@@ -71,7 +164,11 @@ pub fn change_langid(langid: i18n::LanguageIdentifier) {
     _ = window().dispatch_event(&custom_event);
 }
 
-/// Returns a signal to reactively read and write a langid.
+/// Provides the `LangIdContext` to the Leptos context, initializing the language identifier
+/// based on the specified `LangIdSource`.
+///
+/// This function sets up the reactive language identifier and handles its persistence
+/// and updates based on the chosen source (Navigator, LocalStorage, or Cookie).
 pub fn provide_langid_context(source: LangIdSource) {
     let initial_langid = {
         let langid = window().navigator().language().unwrap_throw();
