@@ -208,7 +208,7 @@ pub fn rtr(input: TokenStream) -> TokenStream {
             }
 
             let query_call_block = quote! {
-                let langid = leptos::use_context::<i18n_leptos::LangIdContext>().expect("LangIdContext not found. Make sure you've provided it.");
+                let langid = i18n_leptos::expect_langid();
                 #locales_var.query(&langid.get(), &#query_builder)
             };
 
