@@ -175,7 +175,7 @@ pub fn rtr_impl(input: TokenStream) -> TokenStream {
                         }));
                     });
 
-                    i18n_leptos::ReactiveMessage { msg }
+                    i18n_leptos::ReactiveMessage::new(msg)
                 }
             };
             TokenStream::from(final_expansion)

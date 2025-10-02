@@ -46,6 +46,11 @@ pub struct ReactiveMessage {
 }
 
 impl ReactiveMessage {
+    /// A new reactive message.
+    pub fn new(msg: RwSignal<i18n::Message>) -> Self {
+        Self { msg }
+    }
+
     /// Returns the ID of the localized message.
     ///
     /// This is a reactive read.
