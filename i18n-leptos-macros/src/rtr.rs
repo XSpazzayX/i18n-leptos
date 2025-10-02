@@ -13,27 +13,27 @@ enum RtrInputKind {
 enum RtrArg {
     Locales(Ident),
     Main {
-        key: Ident,
+        key: LitStr,
         value: Expr,
     },
     Attribute {
         attr: LitStr,
-        key: Ident,
+        key: LitStr,
         value: Expr,
     },
 }
 
 struct RtrArgs {
     locales_var: Ident,
-    main_args: Vec<(Ident, Expr)>,
-    attr_args: HashMap<String, Vec<(Ident, Expr)>>,
+    main_args: Vec<(LitStr, Expr)>,
+    attr_args: HashMap<String, Vec<(LitStr, Expr)>>,
 }
 
 impl Parse for RtrArgs {
     fn parse(input: ParseStream) -> Result<Self> {
         let mut locales_var = Ident::new("LOCALES", Span::call_site());
         let mut main_args = Vec::new();
-        let mut attr_args: HashMap<String, Vec<(Ident, Expr)>> = HashMap::new();
+        let mut attr_args: HashMap<String, Vec<(LitStr, Expr)>> = HashMap::new();
 
         while !input.is_empty() {
             input.parse::<Token![,]>()?;
@@ -65,10 +65,10 @@ impl Parse for RtrArgs {
 impl Parse for RtrArg {
     fn parse(input: ParseStream) -> Result<Self> {
         let lookahead = input.lookahead1();
-        if lookahead.peek(Ident) && input.peek2(Token![=]) {
-            let key: Ident = input.parse()?;
+        if lookahead.peek(LitStr) && input.peek2(Token![=]) {
+            let key: LitStr = input.parse()?;
             input.parse::<Token![=]>()?;
-            if key == "locales" {
+            if key.value() == "locales" {
                 Ok(RtrArg::Locales(input.parse()?))
             } else {
                 Ok(RtrArg::Main {
@@ -77,13 +77,19 @@ impl Parse for RtrArg {
                 })
             }
         } else if lookahead.peek(Ident) && input.peek2(syn::token::Paren) {
-            let _attr_ident: Ident = input.parse()?; // Parse 'attr'
+            let attr_ident: Ident = input.parse()?; // Parse 'attr'
+            if attr_ident != "attr" {
+                return Err(syn::Error::new_spanned(
+                    attr_ident,
+                    "Expected 'attr' identifier",
+                ));
+            }
             let content;
             syn::parenthesized!(content in input); // Parse content within parentheses
 
             let attr_id: LitStr = content.parse()?;
             content.parse::<Token![,]>()?;
-            let arg_key: Ident = content.parse()?;
+            let arg_key: LitStr = content.parse()?;
             content.parse::<Token![=]>()?;
             let arg_value: Expr = content.parse()?;
 
@@ -135,14 +141,14 @@ pub fn rtr_impl(input: TokenStream) -> TokenStream {
 
             let main_args_tokens: Vec<_> = main_args
                 .into_iter()
-                .map(|(key, value)| quote! { .with_arg(stringify!(#key), #value) })
+                .map(|(key, value)| quote! { .with_arg(#key, #value) })
                 .collect();
 
             let attr_args_tokens: Vec<_> = attr_args
                 .into_iter()
                 .flat_map(|(attr_name, args)| {
                     args.into_iter().map(move |(key, value)| {
-                        quote! { .with_attr_arg(#attr_name, stringify!(#key), #value) }
+                        quote! { .with_attr_arg(#attr_name, #key, #value) }
                     })
                 })
                 .collect();

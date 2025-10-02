@@ -42,10 +42,10 @@ mod rtr;
 /// -   **`locales = VAR_NAME`** (optional, Mode 1 only): An identifier for the
 ///     `i18n::Locales` static variable to use. Defaults to `LOCALES`.
 /// -   **`key = value`** (optional, Mode 1 only): Key-value pairs for arguments to the
-///     main message. `key` must be an identifier, and `value` can be any Rust expression.
+///     main message. `key` must be a string literal, and `value` can be any Rust expression.
 /// -   **`attr("attr-id", key = value)`** (optional, Mode 1 only): Arguments for a
 ///     specific attribute of the message. `"attr-id"` is a string literal representing
-///     the attribute ID. `key` must be an identifier, and `value` can be any Rust expression.
+///     the attribute ID. `key` must be a string literal, and `value` can be any Rust expression.
 ///
 /// ## Returns
 /// A `i18n_leptos::ReactiveMessage`.
@@ -68,7 +68,7 @@ pub fn rtr(input: TokenStream) -> TokenStream {
 /// -   **`reactive_message`**: An expression that evaluates to a `ReactiveMessage`.
 /// -   **`"attribute-name"`**: A string literal representing the name of the attribute to retrieve.
 /// -   **`key = value`** (optional): Key-value pairs for arguments to the attribute.
-///     `key` must be an identifier, and `value` can be any Rust expression.
+///     `key` must be a string literal, and `value` can be any Rust expression.
 ///
 /// ## Returns
 /// A `String` representing the value of the attribute.

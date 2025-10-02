@@ -1,12 +1,12 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse::{Parse, ParseStream, Result};
-use syn::{Expr, Ident, LitStr, Token};
+use syn::{Expr, LitStr, Token};
 
 struct RattrMacroInput {
     msg: Expr,
     attr: LitStr,
-    args: Vec<(Ident, Expr)>,
+    args: Vec<(LitStr, Expr)>,
 }
 
 impl Parse for RattrMacroInput {
@@ -21,7 +21,7 @@ impl Parse for RattrMacroInput {
             if input.is_empty() {
                 break;
             }
-            let key: Ident = input.parse()?;
+            let key: LitStr = input.parse()?;
             input.parse::<Token![=]>()?;
             let value: Expr = input.parse()?;
             args.push((key, value));
@@ -42,7 +42,7 @@ pub fn rattr_impl(input: TokenStream) -> TokenStream {
     } else {
         let mut fluent_args = quote! { i18n::FluentArgs::new() };
         for (key, value) in args {
-            fluent_args.extend(quote! { .with(stringify!(#key), #value) });
+            fluent_args.extend(quote! { .with(#key, #value) });
         }
 
         TokenStream::from(quote! { #msg.attr_with_args(#attr, Some(&#fluent_args)) })
