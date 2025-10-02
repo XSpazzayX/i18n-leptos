@@ -38,7 +38,7 @@ pub fn rattr_impl(input: TokenStream) -> TokenStream {
     };
 
     if args.is_empty() {
-        TokenStream::from(quote! { #msg.attr(#attr) })
+        TokenStream::from(quote! { #msg.attr(#attr, None) })
     } else {
         let mut fluent_args = quote! { i18n::FluentArgs::new() };
         for (key, value) in args {
