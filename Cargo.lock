@@ -645,7 +645,7 @@ dependencies = [
 [[package]]
 name = "i18n"
 version = "0.1.0"
-source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#8d16bb4b1c565a7a63051dc7d238cadb57e6ffe8"
+source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#84ad3e3bc8d9fbc31a87bc4ae7cf64ef8ec0cbcf"
 dependencies = [
  "i18n-loader",
  "i18n-macros",
@@ -659,6 +659,8 @@ dependencies = [
  "i18n-leptos-macros",
  "leptos",
  "leptos-use",
+ "log",
+ "thiserror 1.0.69",
  "web-sys",
 ]
 
@@ -674,7 +676,7 @@ dependencies = [
 [[package]]
 name = "i18n-loader"
 version = "0.1.0"
-source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#8d16bb4b1c565a7a63051dc7d238cadb57e6ffe8"
+source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#84ad3e3bc8d9fbc31a87bc4ae7cf64ef8ec0cbcf"
 dependencies = [
  "fluent-bundle",
  "lazy_static",
@@ -684,7 +686,7 @@ dependencies = [
 [[package]]
 name = "i18n-macros"
 version = "0.1.0"
-source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#8d16bb4b1c565a7a63051dc7d238cadb57e6ffe8"
+source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#84ad3e3bc8d9fbc31a87bc4ae7cf64ef8ec0cbcf"
 dependencies = [
  "fluent-syntax",
  "proc-macro2",

@@ -8,6 +8,8 @@ i18n-leptos-macros = { path = "./i18n-leptos-macros" }
 leptos = { version = "0.8" }
 leptos-use = { version = "0.16.0-beta", default-features = false }
 i18n = { git = "https://github.com/Instant-Reactive-Systems/i18n.git" }
+log = "0.4"
+thiserror = "1.0"
 web-sys = { version = "0.3", features = [
   "Window",
   "Navigator",
