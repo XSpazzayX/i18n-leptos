@@ -40,11 +40,16 @@ pub fn rattr_impl(input: TokenStream) -> TokenStream {
     if args.is_empty() {
         TokenStream::from(quote! { #msg.attr(#attr, None) })
     } else {
-        let mut fluent_args = quote! { i18n::FluentArgs::new() };
+        let mut fluent_args = quote! { let mut args = i18n::FluentArgs::new(); };
         for (key, value) in args {
-            fluent_args.extend(quote! { .with(#key, #value) });
+            fluent_args.extend(quote! { args.set(#key, #value); });
         }
 
-        TokenStream::from(quote! { #msg.attr_with_args(#attr, Some(&#fluent_args)) })
+        TokenStream::from(quote! {
+            {
+                #fluent_args
+                #msg.attr(#attr, Some(&args))
+            }
+        })
     }
 }
