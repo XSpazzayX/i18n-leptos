@@ -85,7 +85,7 @@ impl ReactiveMessage {
             .write_untracked()
             .attrs
             .get_mut(attr)
-            .map(|attr_cache| match attr_cache.query(args) {
+            .map(|attr_cache| match attr_cache.query(args, true) {
                 Ok(value) => value,
                 Err(err) => {
                     log::error!(
@@ -104,7 +104,7 @@ impl ReactiveMessage {
             .write_untracked()
             .attrs
             .get_mut(attr)
-            .map(|attr_cache| match attr_cache.query(args) {
+            .map(|attr_cache| match attr_cache.query(args, true) {
                 Ok(value) => value,
                 Err(err) => {
                     log::error!(

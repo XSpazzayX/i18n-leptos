@@ -644,11 +644,20 @@ dependencies = [
 
 [[package]]
 name = "i18n"
-version = "0.1.0"
-source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#ebc58ac86c4c2b28cbfb09803074024c61ad408a"
+version = "0.1.1"
+source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#0ed728148fc9d77a865143ee2b4fa6cae85f48ed"
 dependencies = [
+ "i18n-lang",
  "i18n-loader",
  "i18n-macros",
+]
+
+[[package]]
+name = "i18n-lang"
+version = "0.1.1"
+source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#0ed728148fc9d77a865143ee2b4fa6cae85f48ed"
+dependencies = [
+ "unic-langid",
 ]
 
 [[package]]
@@ -675,20 +684,22 @@ dependencies = [
 
 [[package]]
 name = "i18n-loader"
-version = "0.1.0"
-source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#ebc58ac86c4c2b28cbfb09803074024c61ad408a"
+version = "0.1.1"
+source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#0ed728148fc9d77a865143ee2b4fa6cae85f48ed"
 dependencies = [
  "fluent-bundle",
+ "i18n-lang",
  "lazy_static",
  "unic-langid",
 ]
 
 [[package]]
 name = "i18n-macros"
-version = "0.1.0"
-source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#ebc58ac86c4c2b28cbfb09803074024c61ad408a"
+version = "0.1.1"
+source = "git+https://github.com/Instant-Reactive-Systems/i18n.git#0ed728148fc9d77a865143ee2b4fa6cae85f48ed"
 dependencies = [
  "fluent-syntax",
+ "i18n-lang",
  "proc-macro2",
  "quote",
  "syn",
