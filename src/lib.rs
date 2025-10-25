@@ -67,7 +67,11 @@ impl ReactiveMessage {
     ///
     /// This is a reactive read.
     pub fn value(&self) -> String {
-        self.msg.read().value.clone()
+        if !self.msg.is_disposed() {
+            self.msg.read().value.clone()
+        } else {
+            Default::default()
+        }
     }
 
     /// Returns the translated value of the message without tracking.
