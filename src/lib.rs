@@ -70,6 +70,7 @@ impl ReactiveMessage {
         if !self.msg.is_disposed() {
             self.msg.read().value.clone()
         } else {
+            log::error!("i18n_leptos | reactive message signal disposed {:#?}", self.msg);
             Default::default()
         }
     }
